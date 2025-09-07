@@ -1,7 +1,8 @@
+const path = require("path");
 const express = require("express");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
-const path = require("path");
+const cors = require("cors");
 const authRoutes = require("./routes/auth");
 
 const app = express();
@@ -11,6 +12,13 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cookieParser());
 app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+
+app.use(
   session({
     secret: process.env.SESSION_SECRET || "supersecretkey",
     resave: false,
@@ -19,13 +27,18 @@ app.use(
   })
 );
 
-// Routes
+// API Routes
 app.use("/auth", authRoutes);
 
-// Serve React build
+// Serve React frontend
 app.use(express.static(path.join(__dirname, "../frontend/build")));
-app.get("*", (req, res) => {
+
+// **Catch-all route for React Router**
+app.get(/^\/.*$/, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
