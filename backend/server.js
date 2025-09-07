@@ -1,44 +1,43 @@
-const path = require("path");
+// backend/server.js
+
 const express = require("express");
+const path = require("path");
+const cors = require("cors");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
+const bcrypt = require("bcrypt");
+const db = require("./db"); // your SQLite DB setup
 const authRoutes = require("./routes/auth");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Middlewares
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+app.use(session({
+  secret: "your-secret-key",
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // change to true with HTTPS
+}));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "supersecretkey",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false },
-  })
-);
+// Routes
+app.use("/api/auth", authRoutes);
 
-// API Routes
-app.use("/auth", authRoutes);
+// Serve frontend build
+app.use(express.static(path.join(__dirname, "build")));
 
-// Serve React frontend
-app.use(express.static(path.join(__dirname, "../frontend/build")));
-
-// **Catch-all route for React Router**
+// Support React Router
 app.get(/^\/.*$/, (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 // Start server
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
